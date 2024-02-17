@@ -43,6 +43,8 @@ use std::{
     process::ExitCode,
 };
 use tokio::runtime;
+use std::path::Path;
+use ignore::{Walk, WalkBuilder};
 
 const CROSS: &str = "×";
 pub static TICK: Lazy<ColoredString> = Lazy::new(|| "✓".green());
@@ -479,4 +481,16 @@ fn check_empty_profile(profile: &Profile) -> Result<()> {
         bail!("Your currently selected profile is empty! Run `ferium help` to see how to add mods");
     }
     Ok(())
+}
+
+/// Create a `Walk` for the mods folder that respects .feriumignore files
+fn create_mods_folder_walk(directory: &Path) -> Walk {
+    let mut builder = WalkBuilder::new(directory);
+    builder
+        .standard_filters(false)
+        .add_custom_ignore_filename(".feriumignore")
+        .max_depth(Some(1))
+        .filter_entry(|dir_entry| !dir_entry.file_name().eq(".feriumignore"));
+
+    builder.build()
 }

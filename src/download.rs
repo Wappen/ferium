@@ -6,7 +6,7 @@ use anyhow::{anyhow, bail, Error, Result};
 use colored::Colorize;
 use fs_extra::{
     dir::{copy as copy_dir, CopyOptions as DirCopyOptions},
-    file::{move_file, CopyOptions as FileCopyOptions},
+    file::{CopyOptions as FileCopyOptions, move_file},
 };
 use indicatif::ProgressBar;
 use itertools::Itertools;
@@ -15,7 +15,6 @@ use reqwest::Client;
 use size::Size;
 use std::{
     ffi::OsString,
-    fs::read_dir,
     path::{Path, PathBuf},
     sync::{Arc, Mutex},
     time::Duration,
@@ -53,10 +52,12 @@ pub async fn clean(
         );
     }
     create_dir_all(directory.join(".old")).await?;
-    for file in read_dir(directory)? {
+
+    let mods_folder = crate::create_mods_folder_walk(directory);
+    for file in mods_folder {
         let file = file?;
         // If it's a file
-        if file.file_type()?.is_file() {
+        if file.file_type().ok_or(anyhow!("no file type"))?.is_file() {
             let filename = file.file_name();
             let filename = filename.to_string_lossy();
             let filename = filename.as_ref();
@@ -91,9 +92,10 @@ pub async fn clean(
 /// Construct a `to_install` vector from the `directory`
 pub fn read_overrides(directory: &Path) -> Result<Vec<(OsString, PathBuf)>> {
     let mut to_install = Vec::new();
-    for file in read_dir(directory)? {
+    let mods_folder = crate::create_mods_folder_walk(directory);
+    for file in mods_folder {
         let file = file?;
-        to_install.push((file.file_name(), file.path()));
+        to_install.push((file.file_name().to_owned(), file.path().to_owned()));
     }
     Ok(to_install)
 }

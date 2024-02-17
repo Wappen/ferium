@@ -9,7 +9,7 @@ pub use delete::delete;
 pub use info::info;
 pub use switch::switch;
 
-use crate::THEME;
+use crate::{create_mods_folder_walk, THEME};
 use anyhow::{anyhow, bail, Result};
 use colored::Colorize;
 use dialoguer::{Confirm, Select};
@@ -20,7 +20,7 @@ use libium::{
     file_picker::pick_folder,
     HOME,
 };
-use std::{fs::read_dir, path::PathBuf};
+use std::path::PathBuf;
 use tokio::fs::create_dir_all;
 
 pub fn pick_mod_loader(default: Option<&ModLoader>) -> Result<ModLoader> {
@@ -97,7 +97,8 @@ pub async fn check_output_directory(output_dir: &PathBuf) -> Result<()> {
     }
     let mut backup = false;
     if output_dir.exists() {
-        for file in read_dir(output_dir)? {
+        let mods_folder = create_mods_folder_walk(output_dir.as_path());
+        for file in mods_folder {
             let file = file?;
             if file.path().is_file() && file.file_name() != ".DS_Store" {
                 backup = true;

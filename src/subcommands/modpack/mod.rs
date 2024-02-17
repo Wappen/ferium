@@ -10,12 +10,12 @@ pub use info::info;
 pub use switch::switch;
 pub use upgrade::upgrade;
 
-use crate::THEME;
+use crate::{create_mods_folder_walk, THEME};
 use anyhow::{anyhow, bail, Result};
 use dialoguer::Confirm;
 use fs_extra::dir::{copy, CopyOptions};
 use libium::{file_picker::pick_folder, HOME};
-use std::{fs::read_dir, path::Path};
+use std::path::Path;
 
 #[allow(clippy::expect_used)]
 pub fn check_output_directory(output_dir: &Path) -> Result<()> {
@@ -25,7 +25,8 @@ pub fn check_output_directory(output_dir: &Path) -> Result<()> {
     for check_dir in [output_dir.join("mods"), output_dir.join("resourcepacks")] {
         let mut backup = false;
         if check_dir.exists() {
-            for file in read_dir(&check_dir)? {
+            let mods_folder = create_mods_folder_walk(check_dir.as_path());
+            for file in mods_folder {
                 let file = file?;
                 if file.path().is_file() && file.file_name() != ".DS_Store" {
                     backup = true;

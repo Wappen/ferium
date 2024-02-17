@@ -44,6 +44,7 @@ ferinth = "2.10"
 colored = "2.1"
 libium = "1.25"
 anyhow = "1.0"
+ignore = "0.4"
 furse = "1.5"
 size = "0.4"
 

@@ -1,10 +1,7 @@
 // Allow `expect()`s for mutex poisons
 #![allow(clippy::expect_used)]
 
-use crate::{
-    download::{clean, download},
-    CROSS, STYLE_NO, TICK, YELLOW_TICK,
-};
+use crate::{download::{clean, download}, CROSS, STYLE_NO, TICK, YELLOW_TICK, create_mods_folder_walk};
 use anyhow::{anyhow, bail, Result};
 use colored::Colorize;
 use ferinth::Ferinth;
@@ -16,7 +13,6 @@ use libium::{
 };
 use octocrab::Octocrab;
 use std::{
-    fs::read_dir,
     sync::{Arc, Mutex},
     time::Duration,
 };
@@ -197,11 +193,12 @@ pub async fn upgrade(
         get_platform_downloadables(modrinth, curseforge, github, profile).await?;
     let mut to_install = Vec::new();
     if profile.output_dir.join("user").exists() && profile.mod_loader != ModLoader::Quilt {
-        for file in read_dir(profile.output_dir.join("user"))? {
+        let mods_folder = create_mods_folder_walk(profile.output_dir.join("user").as_path());
+        for file in mods_folder {
             let file = file?;
             let path = file.path();
             if path.is_file() && path.extension().is_some_and(|ext| ext == "jar") {
-                to_install.push((file.file_name(), path));
+                to_install.push((file.file_name().to_owned(), path.to_owned()));
             }
         }
     }
